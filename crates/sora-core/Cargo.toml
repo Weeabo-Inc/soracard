@@ -1,0 +1,10 @@
+[package]
+name = "sora-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+# Pure protocol/policy logic. No WDK, no allocation, no I/O — so it builds and
+# unit-tests on the host (Linux/macOS/Windows) with plain `cargo test`.
+[dependencies]

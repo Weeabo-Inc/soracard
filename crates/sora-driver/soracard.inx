@@ -1,0 +1,64 @@
+;=============================================================================
+; soracard.inx - KMDF function driver for the Realtek RTS5129 USB card reader
+;
+; Replaces the vendor driver (service RTSUER). We match the REV-qualified
+; hardware ID first: that gives our package a better driver rank than the
+; vendor INF, which only matches USB\VID_0BDA&PID_0129.
+;
+; wdk-build stamps DriverVer and generates the catalog during `cargo make`.
+;=============================================================================
+
+[Version]
+Signature   = "$WINDOWS NT$"
+Class       = USB
+ClassGuid   = {36FC9E60-C465-11CF-8056-444553540000}
+Provider    = %ProviderString%
+PnpLockDown = 1
+
+[DestinationDirs]
+DefaultDestDir = 13            ; %SystemRoot%\System32\DriverStore\FileRepository
+
+[SourceDisksNames]
+1 = %DiskId1%,,,""
+
+[SourceDisksFiles]
+soracard.sys = 1,,
+
+[Manufacturer]
+%StdMfg% = Standard,NT$ARCH$.10.0...16299
+
+[Standard.NT$ARCH$.10.0...16299]
+%SoraCard.DeviceDesc% = SoraCard_Device, USB\VID_0BDA&PID_0129&REV_3960
+%SoraCard.DeviceDesc% = SoraCard_Device, USB\VID_0BDA&PID_0129
+
+[SoraCard_Device.NT$ARCH$]
+CopyFiles = Drivers_Dir
+
+; --- Service installation ---------------------------------------------------
+[SoraCard_Device.NT$ARCH$.Services]
+AddService = SoraCard, %SPSVCINST_ASSOCSERVICE%, SoraCard_Service_Inst
+
+[SoraCard_Service_Inst]
+DisplayName   = %SoraCard.SVCDESC%
+ServiceType   = 1              ; SERVICE_KERNEL_DRIVER
+StartType     = 3              ; SERVICE_DEMAND_START
+ErrorControl  = 1              ; SERVICE_ERROR_NORMAL
+ServiceBinary = %13%\soracard.sys
+AddReg        = SoraCard_Service_AddReg
+
+; Create the Parameters key so the driver's bring-up diagnostics can write to
+; it (and so WdfDriverOpenParametersRegistryKey has a key to open).
+[SoraCard_Service_AddReg]
+HKR, "Parameters", "Diag", 0x00010001, 0
+
+[Drivers_Dir]
+soracard.sys
+
+;=============================================================================
+[Strings]
+SPSVCINST_ASSOCSERVICE = 0x00000002
+ProviderString         = "SoraCard"
+StdMfg                 = "(Standard system devices)"
+DiskId1                = "SoraCard Installation Disk"
+SoraCard.DeviceDesc    = "SoraCard SD Card Reader"
+SoraCard.SVCDESC       = "SoraCard SD Card Reader Service"

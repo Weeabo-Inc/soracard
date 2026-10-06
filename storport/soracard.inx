@@ -1,0 +1,66 @@
+;=============================================================================
+; soracard.inx - StorPort miniport for the Realtek RTS5129 USB card reader
+;
+; StorPort owns the storage PnP/claim handshake; this package registers the
+; miniport as a SCSIAdapter-class driver for the USB device.
+;=============================================================================
+
+[Version]
+Signature   = "$Windows NT$"
+Class       = SCSIAdapter
+ClassGuid   = {4D36E97B-E325-11CE-BFC1-08002BE10318}
+Provider    = %ProviderString%
+PnpLockDown = 1
+
+[DestinationDirs]
+DefaultDestDir = 13
+
+[SourceDisksNames]
+1 = %DiskId1%,,,""
+
+[SourceDisksFiles]
+soracard.sys = 1,,
+
+[Manufacturer]
+%StdMfg% = Standard,NT$ARCH$.10.0...16299
+
+[Standard.NT$ARCH$.10.0...16299]
+%SoraCard.DeviceDesc% = SoraCard_Inst, USB\VID_0BDA&PID_0129&REV_3960
+%SoraCard.DeviceDesc% = SoraCard_Inst, USB\VID_0BDA&PID_0129
+; Same RTCR controller family (the Linux rtsx_usb driver binds all three).
+; Not yet tested on hardware.
+%SoraCard.DeviceDesc% = SoraCard_Inst, USB\VID_0BDA&PID_0139
+%SoraCard.DeviceDesc% = SoraCard_Inst, USB\VID_0BDA&PID_0140
+
+[SoraCard_Inst.NT$ARCH$]
+CopyFiles = Drivers_Dir
+
+[Drivers_Dir]
+soracard.sys
+
+
+[SoraCard_Inst.NT$ARCH$.Services]
+AddService = soracard, 0x00000002, SoraCard_Service_Inst
+
+[SoraCard_Service_Inst]
+DisplayName   = %SoraCard.SvcDesc%
+ServiceType   = 1              ; SERVICE_KERNEL_DRIVER
+StartType     = 3              ; SERVICE_DEMAND_START (PnP loads it; no boot-loop risk)
+ErrorControl  = 1              ; SERVICE_ERROR_NORMAL
+ServiceBinary = %13%\soracard.sys
+LoadOrderGroup = SCSI Miniport
+AddReg        = SoraCard_Svc_AddReg
+
+[SoraCard_Svc_AddReg]
+; As the reference virtual miniports (WinSpd, Arsenal Image Mounter) do:
+; interface-type matching for StorPort, and report the bus as USB (7).
+HKR, "Parameters\PnpInterface", "0",  0x00010001, 1   ; Internal
+HKR, "Parameters\PnpInterface", "15", 0x00010001, 1   ; PNPBus
+HKR, "Parameters", "BusType", 0x00010001, 7
+
+[Strings]
+ProviderString      = "SoraCard"
+StdMfg              = "(Standard system devices)"
+DiskId1             = "SoraCard StorPort Installation Disk"
+SoraCard.DeviceDesc = "SoraCard SD Card Reader"
+SoraCard.SvcDesc    = "SoraCard StorPort Miniport"

@@ -1,0 +1,38 @@
+[package]
+name = "soracard"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+# WDM (StorPort miniport), not KMDF. windows-drivers-rs allows one WDK config
+# per workspace, so this crate is its own workspace.
+[workspace]
+
+[package.metadata.wdk]
+# Using workspace wdk config
+
+[workspace.metadata.wdk.driver-model]
+driver-type = "WDM"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+sora-core = { path = "../crates/sora-core" }
+storport-sys = "0.1"
+# USB types/URBD for the data path (usb.h, usbdlib.h). WDM config.
+wdk-sys = { version = "0.5.1", features = ["usb"] }
+
+[build-dependencies]
+anyhow = "1.0.89"
+wdk-build = "0.5.1"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+lto = true
+codegen-units = 1
+opt-level = 3

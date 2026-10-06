@@ -1,0 +1,11 @@
+# Build output (root workspace and the separate storport workspace)
+/target/
+/storport/target/
+/crates/*/target/
+
+# Vendor driver packages (Realtek binaries): never commit, see CONTRIBUTING.md
+*.cab
+
+# Local test artefacts
+*.pdb
+*.log

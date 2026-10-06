@@ -1,0 +1,5 @@
+# The driver must link the CRT statically, but only when building for Windows.
+# (An unscoped `[build] rustflags` also applies to host tests and breaks the
+# Linux link, which wants the dynamic libc.)
+[target.'cfg(windows)']
+rustflags = ["-C", "target-feature=+crt-static"]

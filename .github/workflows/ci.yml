@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Pure protocol/policy logic: fast, and it runs everywhere.
+  core:
+    name: sora-core (host tests, lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - run: cargo test -p sora-core
+      - run: cargo fmt --all --check
+      - run: cargo clippy -p sora-core --all-targets -- -D warnings
+
+  # The kernel driver (StorPort miniport, its own WDM workspace in storport/):
+  # needs Windows + WDK. Mirrors Microsoft's own CI setup.
+  driver:
+    name: soracard (StorPort build)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout windows-drivers-rs actions
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/windows-drivers-rs
+          ref: main
+          path: _temp/windows-drivers-rs
+          sparse-checkout: |
+            .github/actions
+          sparse-checkout-cone-mode: false
+
+      - name: Copy actions to workspace
+        shell: pwsh
+        run: Copy-Item -Recurse -Force _temp/windows-drivers-rs/.github/actions .github/
+
+      - name: Install LLVM 17.0.6
+        uses: ./.github/actions/install-llvm
+        with:
+          version: 17.0.6
+
+      - name: Install WDK 10.0.26100
+        uses: ./.github/actions/install-wdk
+        with:
+          version: 10.0.26100
+          source: nuget
+          host: amd64
+          target: amd64
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-wdk
+        run: cargo install cargo-wdk --locked
+
+      - name: Build and package driver
+        working-directory: storport
+        run: cargo wdk build --profile release --target-arch amd64
