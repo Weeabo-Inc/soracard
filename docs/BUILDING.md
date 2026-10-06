@@ -77,12 +77,16 @@ into the **machine** `WDRTestCertStore`.
 
 ## CI
 
-`.github/workflows/ci.yml` runs the `sora-core` host tests, `rustfmt` and
-`clippy -D warnings` on Linux, and builds and packages the StorPort driver
-(release profile) on `windows-latest` with the NuGet WDK. All of these pass
-locally as of 2026-10-06 (91 host tests; `rustfmt` and `clippy` clean on
-`sora-core` and on the driver crate). The repository is not under version
-control yet, so the workflow itself has never run.
+`.github/workflows/ci.yml` runs on every push and pull request:
+
+* **Linux:** the `sora-core` host tests, `rustfmt` on both workspaces and
+  `clippy -D warnings` on `sora-core`.
+* **Windows:** LLVM 17.0.6, the NuGet WDK 10.0.26100.6584 and SDK
+  10.0.26100.1 (the same versions as the test machine), then
+  `tools\build_storport.ps1 -Clippy` and `-Package -Release`, so CI builds,
+  lints and test-signs the driver exactly as the test machine does.
+
+Both jobs are green on `main` (first green run: 2026-10-06).
 
 ### Local tools (Linux development host)
 
