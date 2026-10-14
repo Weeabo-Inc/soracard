@@ -164,6 +164,7 @@ soracard/
 │   ├── sora-core/            no_std, #![forbid(unsafe_code)], host-tested protocol logic
 │   └── sora-driver/          the superseded KMDF attempt, kept for reference
 ├── docs/                     architecture, building, testing, hardware and vendor notes
+├── site/                     static landing page (open site/index.html)
 └── tools/                    build, deploy and test scripts for the Windows machine
 ```
 
